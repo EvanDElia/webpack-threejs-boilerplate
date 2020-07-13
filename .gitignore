@@ -3,7 +3,6 @@ build
 dist
 .ftppass
 *.psd
-package-lock.json
 
 # Created by https://www.gitignore.io/api/terraform
 
