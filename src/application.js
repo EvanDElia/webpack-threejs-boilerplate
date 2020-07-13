@@ -10,7 +10,7 @@ const $ = require('jquery');
 
 const scene = new Scene();
 const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new WebGLRenderer({ preserveDrawingBuffer: true }); // trails { preserveDrawingBuffer: true };
+const renderer = new WebGLRenderer({ preserveDrawingBuffer: true });
 var controls;
 var video, model, Facemesh;
 
@@ -33,7 +33,7 @@ function onWindowResize() {
 
 }
 
-async function init(tracks) {
+async function init() {
     model = await facemesh.load( { maxFaces: 1 } );
 
     var Facegeometry = new FaceMeshFaceGeometry();
@@ -109,12 +109,12 @@ async function init(tracks) {
     var listener = new THREE.AudioListener();
     camera.add( listener );
 
-    // create a global audio source
-    var sound = new THREE.Audio( listener );
-    // load a sound and set it as the Audio object's buffer
-    var audioLoader = new THREE.AudioLoader();
+    // // create a global audio source
+    // var sound = new THREE.Audio( listener );
+    // // load a sound and set it as the Audio object's buffer
+    // var audioLoader = new THREE.AudioLoader();
 
-    new MusicApp(tracks, audioLoader, sound);
+    // new MusicApp(tracks, audioLoader, sound);
 
     // CODE KEYFRAMES INIT
     var ckf = new CodeKeyframes({
@@ -152,10 +152,16 @@ async function init(tracks) {
         }
       });
 
-      //TO DO 
-      // - turn this into a git repo and push code
-      // - create two different branches, one for Music App with three.audio (playlist), and one for codekeyframers and wavesurfer (single song)
-      // - for code keyframes and wavesurfer branch need to integrate music app class with wave surfer (use on frame as render loop)
+    document.getElementById('play').onclick = () => {
+        ckf.wavesurfer.play();
+        $('#play').hide();
+        $('#pause').show();
+    }
+    document.getElementById('pause').onclick = () => {
+        ckf.wavesurfer.pause();
+        $('#play').show();
+        $('#pause').hide();
+    }
 
       // This is to make the wave surfer stuff work with the three js audio analyser
       ckf.wavesurfer.backend.context = ckf.wavesurfer.backend.ac
@@ -178,91 +184,7 @@ async function init(tracks) {
     render();
 }
 
-class MusicApp {
-    constructor(trackList, audioLoader, sound) {
-        this.trackList = trackList;
-        this.audioLoader = audioLoader;
-        this.sound = sound;
-        this.initAudio();
-        this.initUI();
-    }
-
-    initUI() {
-        let self = this;
-
-        var $track_container_onInit = $('#info');
-         self.trackList.forEach(function(track) {
-            $track_container_onInit.append('<div class="song-title">'+ track.trackNumber + '. ' + track.name +'</div>');
-        });
-
-        this.controls = {
-            prev: document.querySelector('#back'),
-            next: document.querySelector('#forward'),
-            play: document.querySelector('#play'),
-            pause: document.querySelector('#pause'),
-        };
-
-        this.controls.prev.onclick = () => {
-            $($(".song-title")[self.currentSong]).removeClass("active");
-            self.currentSong = self.currentSong > 0 ? self.currentSong - 1 : self.trackList.length - 1;
-            $($(".song-title")[self.currentSong]).addClass("active");
-            self.sound.stop();
-            self.audioLoader.load( self.trackList[self.currentSong].url, function( buffer ) {
-                self.sound.setBuffer( buffer );
-                self.sound.play();
-            });
-        };
-        this.controls.next.onclick = () => {
-            $($(".song-title")[self.currentSong]).removeClass("active");
-            self.currentSong = self.currentSong < self.trackList.length - 1 ? self.currentSong + 1 : 0;
-            $($(".song-title")[self.currentSong]).addClass("active");
-            self.sound.stop();
-            self.audioLoader.load( self.trackList[self.currentSong].url, function( buffer ) {
-                self.sound.setBuffer( buffer );
-                self.sound.play();
-            });
-        };
-
-        this.controls.play.onclick = () => {
-                self.sound.play();
-                self.playing = true;
-                $(self.controls.play).css('display','none');
-                $(self.controls.pause).css('display','block');
-        };
-        this.controls.pause.onclick = () => {
-                self.sound.pause();
-                self.playing = false;
-                $(self.controls.play).css('display','block');
-                $(self.controls.pause).css('display','none');
-                
-        };
-
-        $($(".song-title")[this.currentSong]).addClass("active");
-    }
-
-    initAudio() {
-        let self = this;
-        this.currentSong = 0;
-
-        self.audioLoader.load( self.trackList[self.currentSong].url, function( buffer ) {
-            self.sound.setBuffer( buffer );
-            // self.sound.play();
-        });
-
-        this.sound.onEnded = () => {
-            $($(".song-title")[self.currentSong]).removeClass("active");
-            self.currentSong = self.currentSong < self.trackList.length - 1 ? self.currentSong + 1 : 0;
-            $($(".song-title")[self.currentSong]).addClass("active");
-            self.sound.stop();
-            self.audioLoader.load( self.trackList[self.currentSong].url, function( buffer ) {
-                self.sound.setBuffer( buffer );
-                self.sound.play();
-            });
-        };
-    }
-}
-
-async function startVideo(tracks){
+async function startVideo(){
     let constraints = { video: { facingMode: 'user' } };
     let stream = await navigator.mediaDevices.getUserMedia( constraints );
     
@@ -270,24 +192,16 @@ async function startVideo(tracks){
     video.srcObject = stream;        
     video.onloadedmetadata = function () {
         video.play();
-        init(tracks);
+        init();
     };
 }
 
-$.ajax({
-	url: "https://evandelia.com/blackbird/tracks.json",
-	dataType: "json",
-	success: function (response) {
-		document.getElementById('startButton').innerHTML = 'Click to Play';
-		document.getElementById('startButton').onclick = () => {
-			startVideo(response.tracks);
-		}
-	},
-	error: function (response) {
-		console.log(response);
-		$("#info").html("Error Loading");
-	}
-});
+$(document).ready(function(){
+    document.getElementById('startButton').innerHTML = 'Click to Play';
+    document.getElementById('startButton').onclick = () => {
+        startVideo();
+    }
+})
 
 async function render(){
     const faces = await model.estimateFaces( video, false, true );
