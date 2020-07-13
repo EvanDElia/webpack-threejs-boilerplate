@@ -3,14 +3,13 @@ require('./styles.less');
 import {Scene, PerspectiveCamera, WebGLRenderer, BoxGeometry, MeshBasicMaterial, MeshStandardMaterial, Mesh, MeshLambertMaterial} from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FaceMeshFaceGeometry } from './face.js';
-import {CodeKeyframes} from './codeKeyframes.js';
 
 import * as THREE from 'three';
 const $ = require('jquery');
 
 const scene = new Scene();
 const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new WebGLRenderer({ preserveDrawingBuffer: true }); // trails { preserveDrawingBuffer: true };
+const renderer = new WebGLRenderer({ preserveDrawingBuffer: true });
 var controls;
 var video, model, Facemesh;
 
@@ -116,52 +115,7 @@ async function init(tracks) {
 
     new MusicApp(tracks, audioLoader, sound);
 
-    // CODE KEYFRAMES INIT
-    var ckf = new CodeKeyframes({
-        audioPath:     'https://evandelia.com/blackbird/tracks/01%20Neon%20Night.mp3',
-        editorOpen:    true,
-        waveColor:     '#3AEAD2', // wave color right of the playhead
-        progressColor: '#0c9fa7', // wave color left of the playhead
-        bgColor:       '#222',    // color behind waveform
-        label:         'Text that appears above the waveform',
-        autoplay:      false,
-        keyframes:     [{"start":"1.00","end":"1.10","data":{"code":"console.log('this is a keyframe');","state":{"autoClear":"1"}}},{"start":"3.04","end":"3.14","data":{"code":"console.log('change auto clear');","state":{"autoClear":"0"}}}], // paste in here after exporting keyframes,
-
-        state: {
-            autoClear: "1"
-        },
-        
-        onCanPlay: function(){
-            console.log('onCanPlay triggered')
-        },
-      
-        onPlay: function(){
-            console.log('onPlay triggered')
-        },
-      
-        onPause: function(){
-            console.log('onPause triggered')
-        },
-      
-        onFrame: function(){
-            renderer.autoClear = ckf.state.autoClear !== "0";
-            renderer.autoClearColor = ckf.state.autoClear !== "0";
-            console.log(ckf.state.autoClear !== 0);
-            console.log(ckf.state.autoClear);
-            console.log(renderer.autoClear);
-        }
-      });
-
-      //TO DO 
-      // - turn this into a git repo and push code
-      // - create two different branches, one for Music App with three.audio (playlist), and one for codekeyframers and wavesurfer (single song)
-      // - for code keyframes and wavesurfer branch need to integrate music app class with wave surfer (use on frame as render loop)
-
-      // This is to make the wave surfer stuff work with the three js audio analyser
-      ckf.wavesurfer.backend.context = ckf.wavesurfer.backend.ac
-      ckf.wavesurfer.backend.getOutput = () => {return ckf.wavesurfer.backend.gainNode}
-
-    var analyser = new THREE.AudioAnalyser( ckf.wavesurfer.backend, 256 ); // sound, 256
+    var analyser = new THREE.AudioAnalyser( sound, 256 ); // sound, 256
     window.analyser = analyser;
     var bufferSize = analyser.data.length;
     for (var i = 0; i < bufferSize / 2; i++) {
